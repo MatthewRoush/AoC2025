@@ -1,0 +1,7 @@
+.{
+    .name = .aoc2025,
+    .version = "0.0.0",
+    .min_zig_version = "0.15.1",
+    .fingerprint = 0x52176dd5a0d6fabb,
+    .paths = .{""},
+}
