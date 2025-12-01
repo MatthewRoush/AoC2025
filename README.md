@@ -2,6 +2,8 @@
 
 Solving Advent of Code 2025.
 
+[My private leaderboard](https://adventofcode.com/2025/leaderboard/private/view/4969874?view_key=62cf32e5)
+
 ## input_data
 
 There's a `.gitignore`'d folder called `input_data` which has the same folder structure as the `src` folder.
