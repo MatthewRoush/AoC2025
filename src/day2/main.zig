@@ -23,12 +23,12 @@ pub fn main() void {
     defer gpa.free(main_input);
 
     const example_answer_1 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_example_answer_1.txt");
-    const main_answer_1 = utils.readIntFromFile(u32, gpa, cwd, "input_data/day2/puzzle_answer_1.txt");
+    const main_answer_1 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_answer_1.txt");
 
     utils.printDay(2);
 
     solve(example_input, .puzzle1, .example, example_answer_1);
-    solve(main_input,    .puzzle1, .main,    null);
+    solve(main_input,    .puzzle1, .main,    main_answer_1);
 }
 
 fn isDoubleSequence(number: u64) bool {
