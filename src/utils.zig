@@ -28,7 +28,7 @@ pub fn printDay(day: comptime_int) void {
     std.debug.print("----- Day {d} -----\n", .{day});
 }
 
-pub fn checkAnswer(T: type, maybe_expected: ?T, actual: T, puzzle: Puzzle, example: Example) void {
+pub fn checkAnswer(T: type, maybe_expected: ?T, actual: T, comptime puzzle: Puzzle, comptime example: Example) void {
     std.debug.print("    {s} {s}: ", .{puzzle.string(), example.string()});
 
     if (maybe_expected) |expected| {
