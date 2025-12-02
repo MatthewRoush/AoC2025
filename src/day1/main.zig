@@ -54,7 +54,7 @@ fn parseRotation(rotation: []const u8) i32 {
     return value * sign;
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle, example: utils.Example, answer: ?u32) void {
+fn solve(input: []const u8, comptime puzzle: utils.Puzzle, comptime example: utils.Example, answer: ?u32) void {
     var sum: u32 = 0;
 
     var dial: i32 = 50;
