@@ -7,16 +7,16 @@ pub fn build(b: *std.Build) !void {
 
     const run_step = b.step("run", "Run any puzzle solutions that were built.");
 
-    var puzzle_artifacts_buffer: [12]*std.Build.Step.Compile = undefined;
-    var puzzle_artifacts = std.ArrayList(std.meta.Child(@TypeOf(puzzle_artifacts_buffer))).initBuffer(&puzzle_artifacts_buffer);
-
-    const days = if (day == .all) std.meta.fieldNames(AdventDay) else &.{@tagName(day)};
-
     const utils_module = b.createModule(.{
         .root_source_file = b.path("src/utils.zig"),
         .target = target,
         .optimize = optimize,
     });
+
+    var puzzle_artifacts_buffer: [12]*std.Build.Step.Compile = undefined;
+    var puzzle_artifacts = std.ArrayList(std.meta.Child(@TypeOf(puzzle_artifacts_buffer))).initBuffer(&puzzle_artifacts_buffer);
+
+    const days = if (day == .all) std.meta.fieldNames(AdventDay) else &.{@tagName(day)};
 
     for (days) |name| {
         if (std.mem.eql(u8, name, "all")) continue;
