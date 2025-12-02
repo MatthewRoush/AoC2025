@@ -2,8 +2,6 @@ const std = @import("std");
 const builtin = @import("builtin");
 const utils = @import("utils");
 
-const max_file_size = 1024 * 1024;
-
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
 pub fn main() void {
@@ -14,26 +12,7 @@ pub fn main() void {
 
     defer if (debug) std.debug.assert(debug_allocator.deinit() == .ok);
 
-    const cwd = std.fs.cwd();
-
-    const example_input = cwd.readFileAlloc(gpa, "input_data/day2/puzzle_example.txt", max_file_size) catch unreachable;
-    defer gpa.free(example_input);
-
-    const main_input = cwd.readFileAlloc(gpa, "input_data/day2/puzzle.txt", max_file_size) catch unreachable;
-    defer gpa.free(main_input);
-
-    const example_answer_1 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_example_answer_1.txt");
-    const example_answer_2 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_example_answer_2.txt");
-    const main_answer_1 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_answer_1.txt");
-    const main_answer_2 = utils.readIntFromFile(u64, gpa, cwd, "input_data/day2/puzzle_answer_2.txt");
-
-    utils.printDay(2);
-
-    solve(example_input, .puzzle1, .example, example_answer_1);
-    solve(main_input,    .puzzle1, .main,    main_answer_1);
-
-    solve(example_input, .puzzle2, .example, example_answer_2);
-    solve(main_input,    .puzzle2, .main,    main_answer_2);
+    utils.runSolution(u64, gpa, .day2, solve);
 }
 
 fn isDoubleSequence(number: u64) bool {
@@ -96,7 +75,7 @@ fn isAnySequence(number: u64) bool {
     return false;
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle, comptime example: utils.Example, answer: ?u64) void {
+fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u64 {
     var sum: u64 = 0;
 
     var iterator = std.mem.splitScalar(u8, input, ',');
@@ -120,5 +99,5 @@ fn solve(input: []const u8, comptime puzzle: utils.Puzzle, comptime example: uti
         }
     }
 
-    utils.checkAnswer(u64, answer, sum, puzzle, example);
+    return sum;
 }

@@ -4,8 +4,6 @@ const utils = @import("utils");
 
 const dial_max = 99;
 
-const max_file_size = 1024 * 1024;
-
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 
 pub fn main() void {
@@ -16,26 +14,7 @@ pub fn main() void {
 
     defer if (debug) std.debug.assert(debug_allocator.deinit() == .ok);
 
-    const cwd = std.fs.cwd();
-
-    const example_input = cwd.readFileAlloc(gpa, "input_data/day1/puzzle_example.txt", max_file_size) catch unreachable;
-    defer gpa.free(example_input);
-
-    const main_input = cwd.readFileAlloc(gpa, "input_data/day1/puzzle.txt", max_file_size) catch unreachable;
-    defer gpa.free(main_input);
-
-    const example_answer_1 = utils.readIntFromFile(u32, gpa, cwd, "input_data/day1/puzzle_example_answer_1.txt");
-    const example_answer_2 = utils.readIntFromFile(u32, gpa, cwd, "input_data/day1/puzzle_example_answer_2.txt");
-    const main_answer_1 = utils.readIntFromFile(u32, gpa, cwd, "input_data/day1/puzzle_answer_1.txt");
-    const main_answer_2 = utils.readIntFromFile(u32, gpa, cwd, "input_data/day1/puzzle_answer_2.txt");
-
-    utils.printDay(1);
-
-    solve(example_input, .puzzle1, .example, example_answer_1);
-    solve(main_input,    .puzzle1, .main,    main_answer_1);
-
-    solve(example_input, .puzzle2, .example, example_answer_2);
-    solve(main_input,    .puzzle2, .main,    main_answer_2);
+    utils.runSolution(u32, gpa, .day1, solve);
 }
 
 fn parseRotation(rotation: []const u8) i32 {
@@ -54,7 +33,7 @@ fn parseRotation(rotation: []const u8) i32 {
     return value * sign;
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle, comptime example: utils.Example, answer: ?u32) void {
+fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u32 {
     var sum: u32 = 0;
 
     var dial: i32 = 50;
@@ -85,5 +64,5 @@ fn solve(input: []const u8, comptime puzzle: utils.Puzzle, comptime example: uti
         dial = wrapped_dial;
     }
 
-    utils.checkAnswer(u32, answer, sum, puzzle, example);
+    return sum;
 }
