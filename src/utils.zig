@@ -118,3 +118,42 @@ pub fn readIntFromFile(T: type, allocator: std.mem.Allocator, dir: std.fs.Dir, p
 
     return std.fmt.parseInt(T, data, 10) catch unreachable;
 }
+
+pub const LineIterator = struct {
+    const Self = @This();
+
+    newline_iterator: std.mem.SplitIterator(u8, .scalar),
+
+    fn maybeStripTrailingCr(buffer: []const u8)[]const u8 {
+        return switch (buffer[buffer.len - 1]) {
+            '\r' => buffer[0 .. buffer.len - 1],
+            else => buffer
+        };
+    }
+
+    pub fn first(self: *Self) []const u8 {
+        return maybeStripTrailingCr(self.newline_iterator.first());
+    }
+
+    pub fn next(self: *Self) ?[]const u8 {
+        return maybeStripTrailingCr(self.newline_iterator.next() orelse return null);
+    }
+
+    pub fn peek(self: *Self) ?[]const u8 {
+        return maybeStripTrailingCr(self.newline_iterator.peek() orelse return null);
+    }
+
+    pub fn reset(self: *Self) ?[]const u8 {
+        self.newline_iterator.reset();
+    }
+
+    pub fn rest(self: *Self) []const u8 {
+        return self.newline_iterator.rest();
+    }
+};
+
+pub fn lineIterator(buffer: []const u8) LineIterator {
+    return .{
+        .newline_iterator = std.mem.splitScalar(u8, buffer, '\n'),
+    };
+}
