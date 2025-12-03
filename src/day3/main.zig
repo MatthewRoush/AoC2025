@@ -16,36 +16,35 @@ pub fn main() void {
 }
 
 fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u64 {
-    if (puzzle == .puzzle2) return undefined;
-
     var sum: u64 = 0;
+
+    const battery_count = if (puzzle == .puzzle1) 2 else 12;
 
     var iterator = utils.lineIterator(input);
 
     while (iterator.next()) |line| {
-        var first_digit: u8 = '0';
-        var first_digit_i: usize = 0;
+        var joltage: u64 = 0;
+        var previous_battery_i: usize = 0;
 
-        for (line[0 .. line.len - 1], 0 ..) |ch, i| {
-            if (ch > first_digit) {
-                first_digit = ch;
-                first_digit_i = i;
+        for (0 .. battery_count) |i| {
+            var digit: u8 = '0';
 
-                if (first_digit == '9') break;
+            const start = if (i == 0) previous_battery_i else previous_battery_i + 1;
+            const end = line.len - (battery_count - 1 - i);
+
+            for (line[start .. end], start ..) |ch, k| {
+                if (ch > digit) {
+                    digit = ch;
+                    previous_battery_i = k;
+
+                    if (ch == '9') break;
+                }
             }
+
+            joltage = joltage * 10 + (digit - '0');
         }
 
-        var second_digit: u8 = '0';
-
-        for (line[first_digit_i + 1 ..]) |ch| {
-            if (ch > second_digit) {
-                second_digit = ch;
-
-                if (second_digit == '9') break;
-            }
-        }
-
-        sum += ((first_digit - '0') * 10) + (second_digit - '0');
+        sum += joltage;
     }
 
     return sum;
