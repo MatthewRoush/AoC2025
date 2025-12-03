@@ -38,14 +38,10 @@ fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u32 {
 
     var dial: i32 = 50;
 
-    var iterator = std.mem.splitScalar(u8, input, '\n');
+    var iterator = utils.lineIterator(input);
 
     while (iterator.next()) |line| {
-        // If the line endings are "\r\n" then `line` will end with a '\r'.
-        const rotation = switch (line[line.len - 1]) {
-            '\r' => parseRotation(line[0 .. line.len - 1]),
-            else => parseRotation(line)
-        };
+        const rotation = parseRotation(line);
 
         const rotated_dial = dial + rotation;
 
