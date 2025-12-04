@@ -16,53 +16,79 @@ pub fn main() void {
 }
 
 fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u32 {
-    _ = puzzle;
-
     var sum: u32 = 0;
 
-    var grid: std.ArrayList(u8) = .empty;
-    defer grid.deinit(allocator);
-
-    var grid_height: usize = 0;
+    var array: std.ArrayList(u8) = .empty;
 
     var iterator = utils.lineIterator(input);
 
     const grid_width = iterator.first().len;
     iterator.reset();
 
+    var grid_height: usize = 0;
+
     while (iterator.next()) |line| {
-        grid.appendSlice(allocator, line) catch unreachable;
+        array.appendSlice(allocator, line) catch unreachable;
         grid_height += 1;
     }
 
-    for (grid.items, 0 ..) |cell, i| {
-        if (cell == '.') continue;
+    var grid_primary = array.toOwnedSlice(allocator) catch unreachable;
+    defer allocator.free(grid_primary);
 
-        var neighbors: u32 = 0;
+    var grid_secondary: []u8 = allocator.dupe(u8, grid_primary) catch unreachable;
+    defer allocator.free(grid_secondary);
 
-        const x: i32 = @intCast(i % grid_width);
-        const y: i32 = @intCast(i / grid_width);
+    while (true) {
+        var removed_any = false;
 
-        var y_offset: i32 = -1;
+        for (grid_primary, 0 ..) |cell, i| {
 
-        while (y_offset < 2) : (y_offset += 1) {
-            var x_offset: i32 = -1;
+            if (cell == '.') {
+                grid_secondary[i] = '.';
 
-            while (x_offset < 2) : (x_offset += 1) {
-                if (x_offset == 0 and y_offset == 0) continue;
+                continue;
+            }
 
-                const neighbor_x = x + x_offset;
-                const neighbor_y = y + y_offset;
+            std.debug.assert(cell == '@');
 
-                if (neighbor_x < 0 or neighbor_x >= grid_width or neighbor_y < 0 or neighbor_y >= grid_height) continue;
+            var neighbors: u32 = 0;
 
-                const neighbor_index = @as(usize, @intCast(neighbor_x)) + @as(usize, @intCast(neighbor_y)) * grid_width;
+            const x: i32 = @intCast(i % grid_width);
+            const y: i32 = @intCast(i / grid_width);
 
-                if (grid.items[neighbor_index] == '@') neighbors += 1;
+            var y_offset: i32 = -1;
+
+            while (y_offset < 2) : (y_offset += 1) {
+                var x_offset: i32 = -1;
+
+                while (x_offset < 2) : (x_offset += 1) {
+                    if (x_offset == 0 and y_offset == 0) continue;
+
+                    const neighbor_x = x + x_offset;
+                    const neighbor_y = y + y_offset;
+
+                    if (neighbor_x < 0 or neighbor_x >= grid_width or neighbor_y < 0 or neighbor_y >= grid_height) continue;
+
+                    const neighbor_index = @as(usize, @intCast(neighbor_x)) + @as(usize, @intCast(neighbor_y)) * grid_width;
+
+                    if (grid_primary[neighbor_index] == '@') neighbors += 1;
+                }
+            }
+
+            if (neighbors < 4) {
+                sum += 1;
+                grid_secondary[i] = '.';
+                removed_any = true;
             }
         }
 
-        if (neighbors < 4) sum += 1;
+        if (puzzle == .puzzle1) break;
+
+        if (!removed_any) break;
+
+        const temp = grid_primary;
+        grid_primary = grid_secondary;
+        grid_secondary = temp;
     }
 
     return sum;
