@@ -15,7 +15,7 @@ pub fn main() void {
     utils.runSolution(u64, gpa, .day3, solve);
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u64 {
+fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
     var sum: u64 = 0;
 
     const battery_count = if (puzzle == .puzzle1) 2 else 12;

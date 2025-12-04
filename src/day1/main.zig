@@ -33,7 +33,7 @@ fn parseRotation(rotation: []const u8) i32 {
     return value * sign;
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u32 {
+fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u32 {
     var sum: u32 = 0;
 
     var dial: i32 = 50;

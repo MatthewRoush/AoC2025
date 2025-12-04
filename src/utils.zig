@@ -69,7 +69,7 @@ pub fn checkAnswer(T: type, maybe_expected: ?T, actual: T, comptime puzzle: Puzz
     }
 }
 
-pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, solve: *const fn (input: []const u8, comptime puzzle: Puzzle) T) void {
+pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, solve: *const fn (allocator: std.mem.Allocator, input: []const u8, comptime puzzle: Puzzle) T) void {
     const cwd = std.fs.cwd();
 
     const day_str = comptime day.string();
@@ -90,19 +90,19 @@ pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, sol
     var timer = std.time.Timer.start() catch unreachable;
 
     {
-        const answer = solve(example_input, .puzzle1);
+        const answer = solve(allocator, example_input, .puzzle1);
         checkAnswer(T, example_answer_1, answer, .puzzle1, .example);
     }
     {
-        const answer = solve(main_input, .puzzle1);
+        const answer = solve(allocator, main_input, .puzzle1);
         checkAnswer(T, main_answer_1, answer, .puzzle1, .main);
     }
     {
-        const answer = solve(example_input, .puzzle2);
+        const answer = solve(allocator, example_input, .puzzle2);
         checkAnswer(T, example_answer_2, answer, .puzzle2, .example);
     }
     {
-        const answer = solve(main_input, .puzzle2);
+        const answer = solve(allocator, main_input, .puzzle2);
         checkAnswer(T, main_answer_2, answer, .puzzle2, .main);
     }
 

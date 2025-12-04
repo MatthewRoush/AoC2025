@@ -75,7 +75,7 @@ fn isAnySequence(number: u64) bool {
     return false;
 }
 
-fn solve(input: []const u8, comptime puzzle: utils.Puzzle) u64 {
+fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
     var sum: u64 = 0;
 
     var iterator = std.mem.splitScalar(u8, input, ',');
