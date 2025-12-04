@@ -143,7 +143,7 @@ pub const LineIterator = struct {
         return maybeStripTrailingCr(self.newline_iterator.peek() orelse return null);
     }
 
-    pub fn reset(self: *Self) ?[]const u8 {
+    pub fn reset(self: *Self) void {
         self.newline_iterator.reset();
     }
 
