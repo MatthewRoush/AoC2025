@@ -26,6 +26,7 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
     var fresh_ids: u32 = 0;
 
     var id_ranges: std.ArrayList(IdRange) = .empty;
+    defer id_ranges.deinit(allocator);
 
     var iterator = utils.lineIterator(input);
 
