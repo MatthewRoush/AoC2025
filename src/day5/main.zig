@@ -17,13 +17,11 @@ pub fn main() void {
 
     defer if (debug) std.debug.assert(debug_allocator.deinit() == .ok);
 
-    utils.runSolution(u32, gpa, .day5, solve);
+    utils.runSolution(u64, gpa, .day5, solve);
 }
 
-fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u32 {
-    _ = puzzle;
-
-    var fresh_ids: u32 = 0;
+fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
+    var fresh_ids: u64 = 0;
 
     var id_ranges: std.ArrayList(IdRange) = .empty;
     defer id_ranges.deinit(allocator);
@@ -45,14 +43,65 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
         id_ranges.append(allocator, range) catch unreachable;
     }
 
-    // Check IDs.
-    while (iterator.next()) |line| {
-        const id = std.fmt.parseInt(u64, line, 10) catch unreachable;
+    switch (puzzle) {
+        .puzzle1 => {
+            // Check IDs.
+            while (iterator.next()) |line| {
+                const id = std.fmt.parseInt(u64, line, 10) catch unreachable;
 
-        for (id_ranges.items) |range| {
-            if (id >= range.begin and id <= range.end) {
-                fresh_ids += 1;
-                break;
+                for (id_ranges.items) |range| {
+                    if (id >= range.begin and id <= range.end) {
+                        fresh_ids += 1;
+                        break;
+                    }
+                }
+            }
+        },
+        .puzzle2 => {
+            var indicies_to_remove: std.ArrayList(usize) = std.ArrayList(usize).initCapacity(allocator, 16) catch unreachable;
+            defer indicies_to_remove.deinit(allocator);
+
+            var compressed = false;
+
+            while (!compressed) {
+                var i: usize = 0;
+
+                var removed_any = false;
+
+                while (i < id_ranges.items.len) {
+                    const range = &id_ranges.items[i];
+
+                    indicies_to_remove.clearRetainingCapacity();
+
+                    for (id_ranges.items, 0 ..) |other, k| {
+                        if (i == k) continue;
+
+                        if (other.begin >= range.begin and other.end <= range.end) {
+                            indicies_to_remove.appendAssumeCapacity(k);
+                        } else if (other.begin >= range.begin and other.begin <= range.end and other.end > range.end) {
+                            range.end = other.end;
+                            indicies_to_remove.appendAssumeCapacity(k);
+                        } else if (other.begin < range.begin and other.end >= range.begin and other.end <= range.end) {
+                            range.begin = other.begin;
+                            indicies_to_remove.appendAssumeCapacity(k);
+                        }
+                    }
+
+                    if (indicies_to_remove.items.len > 0) {
+                        id_ranges.orderedRemoveMany(indicies_to_remove.items);
+
+                        i = indicies_to_remove.items[0];
+                        removed_any = true;
+                    } else {
+                        i += 1;
+                    }
+                }
+
+                compressed = compressed or !removed_any;
+            }
+
+            for (id_ranges.items) |range| {
+                fresh_ids += range.end - range.begin + 1;
             }
         }
     }
