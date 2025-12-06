@@ -16,10 +16,9 @@ pub fn main() void {
 }
 
 fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
-    _ = puzzle;
-
     const static = struct {
         var rows_buffer: [16][]const u8 = undefined;
+        var number_buffer: [16]u8 = undefined;
     };
 
     var sum: u64 = 0;
@@ -38,6 +37,8 @@ fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle)
         }
     }
 
+    var number_builder: std.ArrayList(u8) = .initBuffer(&static.number_buffer);
+
     while (true) {
         if (operator_row.len == 0) break;
 
@@ -54,20 +55,48 @@ fn solve(_: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle)
             else => unreachable
         };
 
-        for (number_rows.items) |*row| {
-            while (row.*[0] == ' ') row.* = row.*[1 ..];
+        switch (puzzle) {
+            .puzzle1 => {
+                for (number_rows.items) |*row| {
+                    while (row.*[0] == ' ') row.* = row.*[1 ..];
 
-            var i: usize = 0;
-            while (i < row.len and row.*[i] != ' ') i += 1;
+                    var i: usize = 0;
+                    while (i < row.len and row.*[i] != ' ') i += 1;
 
-            const number = std.fmt.parseInt(u64, row.*[0 .. i], 10) catch unreachable;
+                    const number = std.fmt.parseInt(u64, row.*[0 .. i], 10) catch unreachable;
 
-            if (i + 1 < row.len) row.* = row.*[i + 1 ..];
+                    if (i + 1 < row.len) row.* = row.*[i + 1 ..];
 
-            switch (operator) {
-                '+' => answer += number,
-                '*' => answer *= number,
-                else => unreachable
+                    switch (operator) {
+                        '+' => answer += number,
+                        '*' => answer *= number,
+                        else => unreachable
+                    }
+                }
+            },
+            .puzzle2 => {
+                while (true) {
+                    number_builder.clearRetainingCapacity();
+
+                    for (number_rows.items) |*row| {
+                        if (row.len == 0) break;
+
+                        const ch = row.*[0];
+                        if (ch >= '0' and ch <= '9') number_builder.appendAssumeCapacity(ch);
+
+                        row.* = row.*[1 ..];
+                    }
+
+                    if (number_builder.items.len == 0) break;
+
+                    const number: u64 = std.fmt.parseInt(u64, number_builder.items, 10) catch unreachable;
+
+                    switch (operator) {
+                        '+' => answer += number,
+                        '*' => answer *= number,
+                        else => unreachable
+                    }
+                }
             }
         }
 
