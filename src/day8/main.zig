@@ -47,8 +47,6 @@ pub fn main() void {
 }
 
 fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
-    if (puzzle == .puzzle2) return undefined;
-
     var boxes: std.ArrayList(Vector3) = .empty;
     defer boxes.deinit(allocator);
 
@@ -86,100 +84,159 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
 
     std.mem.sortUnstable(Pair, pairs.items, {}, Pair.lessThan);
 
-    // Use the first n pairs.
-    if (boxes.items.len == example_boxes_count) {
-        pairs.shrinkAndFree(allocator, example_max_pairs);
-    } else {
-        std.debug.assert(pairs.items.len > max_pairs);
-        pairs.shrinkAndFree(allocator, max_pairs);
-    }
+    switch (puzzle) {
+        .puzzle1 => {
+            var circuits: std.ArrayList(std.AutoArrayHashMapUnmanaged(u16, void)) = .empty;
+            defer {
+                for (circuits.items) |*circuit| {
+                    circuit.deinit(allocator);
+                }
 
-    var circuits: std.ArrayList(std.AutoArrayHashMapUnmanaged(u16, void)) = .empty;
-    defer {
-        for (circuits.items) |*circuit| {
-            circuit.deinit(allocator);
-        }
-
-        circuits.deinit(allocator);
-    }
-
-    // Group box pairs into circuits.
-    for (pairs.items, 0 ..) |pair, i| {
-        var circuit_i = circuits.items.len;
-
-        // Check if the current pair is associated with a circuit.
-        for (circuits.items, 0 ..) |*circuit, k| {
-            if (circuit.contains(pair.a) or circuit.contains(pair.b)) {
-                circuit.put(allocator, pair.a, {}) catch unreachable;
-                circuit.put(allocator, pair.b, {}) catch unreachable;
-
-                circuit_i = k;
-
-                break;
+                circuits.deinit(allocator);
             }
-        }
 
-        if (circuit_i == circuits.items.len) {
-            circuits.append(allocator, .empty) catch unreachable;
-
-            circuits.items[circuit_i].putNoClobber(allocator, pair.a, {}) catch unreachable;
-            circuits.items[circuit_i].putNoClobber(allocator, pair.b, {}) catch unreachable;
-        }
-
-        var circuit = circuits.items[circuit_i];
-
-        // Pull other pairs into the circuit.
-        for (pairs.items[i + 1 ..]) |other_pair| {
-            if (pair.a == other_pair.a or pair.a == other_pair.b or pair.b == other_pair.a or pair.b == other_pair.b) {
-
-                circuit.put(allocator, other_pair.a, {}) catch unreachable;
-                circuit.put(allocator, other_pair.b, {}) catch unreachable;
+            // Use the first n pairs.
+            if (boxes.items.len == example_boxes_count) {
+                pairs.shrinkAndFree(allocator, example_max_pairs);
+            } else {
+                std.debug.assert(pairs.items.len > max_pairs);
+                pairs.shrinkAndFree(allocator, max_pairs);
             }
-        }
-    }
 
-    // Combine circuits that have a shared box.
-    compression_loop: while (true) {
-        var compressed_any = false;
+            // Group box pairs into circuits.
+            for (pairs.items, 0 ..) |pair, i| {
+                var circuit_i = circuits.items.len;
 
-        outer_for_loop: for (circuits.items, 0 ..) |*circuit, i| {
-            for (circuit.keys()) |box_i| {
-                for (circuits.items, 0 ..) |other_circuit, k| {
-                    if (i == k) continue;
+                // Check if the current pair is associated with a circuit.
+                for (circuits.items, 0 ..) |*circuit, k| {
+                    if (circuit.contains(pair.a) or circuit.contains(pair.b)) {
+                        circuit.put(allocator, pair.a, {}) catch unreachable;
+                        circuit.put(allocator, pair.b, {}) catch unreachable;
 
-                    if (other_circuit.contains(box_i)) {
-                        compressed_any = true;
+                        circuit_i = k;
 
-                        for (other_circuit.keys()) |key| circuit.put(allocator, key, {}) catch unreachable;
+                        break;
+                    }
+                }
 
-                        var removed = circuits.swapRemove(k);
-                        removed.deinit(allocator);
+                if (circuit_i == circuits.items.len) {
+                    circuits.append(allocator, .empty) catch unreachable;
 
-                        break :outer_for_loop;
+                    circuits.items[circuit_i].putNoClobber(allocator, pair.a, {}) catch unreachable;
+                    circuits.items[circuit_i].putNoClobber(allocator, pair.b, {}) catch unreachable;
+                }
+
+                var circuit = circuits.items[circuit_i];
+
+                // Pull other pairs into the circuit.
+                for (pairs.items[i + 1 ..]) |other_pair| {
+                    if (pair.a == other_pair.a or pair.a == other_pair.b or pair.b == other_pair.a or pair.b == other_pair.b) {
+
+                        circuit.put(allocator, other_pair.a, {}) catch unreachable;
+                        circuit.put(allocator, other_pair.b, {}) catch unreachable;
                     }
                 }
             }
+
+            // Combine circuits that have a shared box.
+            compression_loop: while (true) {
+                var compressed_any = false;
+
+                outer_for_loop: for (circuits.items, 0 ..) |*circuit, i| {
+                    for (circuit.keys()) |box_i| {
+                        for (circuits.items, 0 ..) |other_circuit, k| {
+                            if (i == k) continue;
+
+                            if (other_circuit.contains(box_i)) {
+                                compressed_any = true;
+
+                                for (other_circuit.keys()) |key| circuit.put(allocator, key, {}) catch unreachable;
+
+                                var removed = circuits.swapRemove(k);
+                                removed.deinit(allocator);
+
+                                break :outer_for_loop;
+                            }
+                        }
+                    }
+                }
+
+                if (!compressed_any) break :compression_loop;
+            }
+
+            var biggest_circuits: [3]usize = .{0, 0, 0};
+
+            for (circuits.items) |circuit| {
+                const len = circuit.entries.len;
+
+                var min_index: usize = 0;
+
+                if (biggest_circuits[min_index] > biggest_circuits[1]) min_index = 1;
+                if (biggest_circuits[min_index] > biggest_circuits[2]) min_index = 2;
+
+                // I incorrectly wrote this without the if statement and spent a day scrutinizing every other part of the algorithm.
+                if (len > biggest_circuits[min_index]) biggest_circuits[min_index] = len;
+            }
+
+            var product: u64 = 1;
+            for (&biggest_circuits) |size| product *= size;
+
+            return product;
+        },
+        .puzzle2 => {
+            var circuit: std.AutoArrayHashMapUnmanaged(u16, void) = .empty;
+            defer circuit.deinit(allocator);
+
+            var pair_i: usize = 0;
+
+            var loose_pairs: std.ArrayList(Pair) = .empty;
+            defer loose_pairs.deinit(allocator);
+
+            var loose_pairs_to_remove: std.ArrayList(usize) = .empty;
+            defer loose_pairs_to_remove.deinit(allocator);
+
+            circuit.put(allocator, pairs.items[pair_i].a, {}) catch unreachable;
+            circuit.put(allocator, pairs.items[pair_i].b, {}) catch unreachable;
+
+            pair_i += 1;
+
+            while (circuit.entries.len != boxes.items.len) {
+                const pair = pairs.items[pair_i];
+                pair_i += 1;
+
+                var added_to_circuit = false;
+
+                if (circuit.contains(pair.a) or circuit.contains(pair.b)) {
+                    circuit.put(allocator, pair.a, {}) catch unreachable;
+                    circuit.put(allocator, pair.b, {}) catch unreachable;
+
+                    added_to_circuit = true;
+
+                    loose_pairs_to_remove.clearRetainingCapacity();
+
+                    for (loose_pairs.items, 0 ..) |other_pair, i| {
+                        if (circuit.contains(other_pair.a) or circuit.contains(other_pair.b)) {
+                            circuit.put(allocator, other_pair.a, {}) catch unreachable;
+                            circuit.put(allocator, other_pair.b, {}) catch unreachable;
+
+                            loose_pairs_to_remove.append(allocator, i) catch unreachable;
+                        }
+                    }
+
+                    loose_pairs.orderedRemoveMany(loose_pairs_to_remove.items);
+                }
+
+                if (!added_to_circuit) {
+                    loose_pairs.append(allocator, pair) catch unreachable;
+                }
+            }
+
+            const pair = pairs.items[pair_i - 1];
+
+            const box_a = boxes.items[pair.a];
+            const box_b = boxes.items[pair.b];
+
+            return @as(u64, @intCast(box_a.x)) * @as(u64, @intCast(box_b.x));
         }
-
-        if (!compressed_any) break :compression_loop;
     }
-
-    var biggest_circuits: [3]usize = .{0, 0, 0};
-
-    for (circuits.items) |circuit| {
-        const len = circuit.entries.len;
-
-        var min_index: usize = 0;
-
-        if (biggest_circuits[min_index] > biggest_circuits[1]) min_index = 1;
-        if (biggest_circuits[min_index] > biggest_circuits[2]) min_index = 2;
-
-        // I incorrectly wrote this without the if statement and spent a day scrutinizing every other part of the algorithm.
-        if (len > biggest_circuits[min_index]) biggest_circuits[min_index] = len;
-    }
-
-    var product: u64 = 1;
-    for (&biggest_circuits) |size| product *= size;
-
-    return product;
 }
