@@ -9,25 +9,9 @@ const Vector2 = struct {
     y: i32,
 };
 
-const Rectangle = struct {
-    p1: Vector2,
-    p2: Vector2,
-    area: u64 = undefined,
-
-    pub fn init(p1: Vector2, p2: Vector2) @This() {
-        var self: @This() = .{.p1 = p1, .p2 = p2};
-        self.calcArea();
-        return self;
-    }
-
-    pub fn calcArea(self: *@This()) void {
-        self.area = @as(u64, @intCast((@abs(self.p1.x - self.p2.x) + 1))) * @as(u64, @intCast((@abs(self.p1.y - self.p2.y) + 1)));
-    }
-
-    pub fn greaterThan(_: void, a: @This(), b: @This()) bool {
-        return a.area > b.area;
-    }
-};
+fn rectArea(p1: Vector2, p2: Vector2) u64 {
+    return @as(u64, @intCast((@abs(p1.x - p2.x) + 1))) * @as(u64, @intCast((@abs(p1.y - p2.y) + 1)));
+}
 
 pub fn main() void {
     const gpa, const debug = switch (builtin.mode) {
@@ -41,13 +25,12 @@ pub fn main() void {
 }
 
 fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils.Puzzle) u64 {
-    if (puzzle == .puzzle2) return undefined;
+    if (puzzle == .puzzle2) return 0;
 
     var tiles: std.ArrayList(Vector2) = .empty;
     defer tiles.deinit(allocator);
 
-    var rects: std.ArrayList(Rectangle) = .empty;
-    defer rects.deinit(allocator);
+    var biggest_rect: u64 = 0;
 
     var iterator = utils.lineIterator(input);
 
@@ -60,13 +43,13 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
         };
 
         for (tiles.items) |other_tile| {
-            rects.append(allocator, .init(tile, other_tile)) catch unreachable;
+            const new_rect = rectArea(tile, other_tile);
+
+            if (new_rect > biggest_rect) biggest_rect = new_rect;
         }
 
         tiles.append(allocator, tile) catch unreachable;
     }
 
-    std.mem.sortUnstable(Rectangle, rects.items, {}, Rectangle.greaterThan);
-
-    return rects.items[0].area;
+    return biggest_rect;
 }
