@@ -110,7 +110,7 @@ pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, sol
 }
 
 pub fn readIntFromFile(T: type, allocator: std.mem.Allocator, dir: std.fs.Dir, path: []const u8) ?T {
-    const data = dir.readFileAlloc(allocator, path, 1024 * 1024) catch |err| switch (err) {
+    const data = dir.readFileAlloc(allocator, path, 1024) catch |err| switch (err) {
         error.FileNotFound => return null,
         else => unreachable
     };
