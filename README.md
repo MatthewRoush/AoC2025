@@ -17,6 +17,7 @@ Solving Advent of Code 2025.
 |   7 |    53m 48s |        >24h |
 |   8 |       >24h |        >24h |
 |   9 |       >24h |        >24h |
+|  10 |       >24h |         N/A |
 
 ## input_data
 
