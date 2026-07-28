@@ -153,8 +153,6 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
                     press_branches[i] = null;
                 }
 
-                var remaining_buttons_mask: Machine.IndicatorLights = .initEmpty();
-
                 for (0..machine.button_count) |new| {
                     var is_new = true;
                     for (current.prev_pressed[0..current.presses]) |prev| {
@@ -165,15 +163,11 @@ fn solve(allocator: std.mem.Allocator, input: []const u8, comptime puzzle: utils
                     }
 
                     if (is_new) {
-                        const new_mask = machine.buttons[new];
-
-                        remaining_buttons_mask.setUnion(new_mask);
-
                         var prev_pressed = current.prev_pressed;
                         prev_pressed[current.presses] = @intCast(new);
 
                         press_branches[i].?.append(allocator, .{
-                            .lights       = current.lights.xorWith(new_mask),
+                            .lights       = current.lights.xorWith(machine.buttons[new]),
                             .presses      = current.presses + 1,
                             .prev_pressed = prev_pressed,
                         }) catch unreachable;
