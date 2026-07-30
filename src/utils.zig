@@ -74,8 +74,38 @@ pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, sol
 
     const day_str = comptime day.string();
 
-    const example_input = cwd.readFileAlloc(allocator, "input_data/" ++ day_str ++ "/puzzle_example.txt", max_file_size) catch unreachable;
-    defer allocator.free(example_input);
+    const data_directory_path = "input_data/" ++ day_str;
+
+    // If both puzzles use the same example input, only 'example_path' is used.
+    // If both puzzles have a different example input, 'example_path_1' and 'example_path_2' are used.
+    const example_path   = data_directory_path ++ "/puzzle_example.txt";
+    const example_path_1 = data_directory_path ++ "/puzzle_example_1.txt";
+    const example_path_2 = data_directory_path ++ "/puzzle_example_2.txt";
+
+    const example_input: ?[]u8 = cwd.readFileAlloc(allocator, example_path, max_file_size) catch |err| switch (err) {
+        else => unreachable,
+        error.FileNotFound => null,
+    };
+
+    var example_input_1: []u8 = undefined;
+    var example_input_2: []u8 = undefined;
+
+    if (example_input == null) {
+        example_input_1 = cwd.readFileAlloc(allocator, example_path_1, max_file_size) catch unreachable;
+        example_input_2 = cwd.readFileAlloc(allocator, example_path_2, max_file_size) catch unreachable;
+    } else {
+        example_input_1 = example_input.?;
+        example_input_2 = example_input.?;
+    }
+
+    defer {
+        if (example_input != null) {
+            allocator.free(example_input.?);
+        } else {
+            allocator.free(example_input_1);
+            allocator.free(example_input_2);
+        }
+    }
 
     const main_input = cwd.readFileAlloc(allocator, "input_data/" ++ day_str ++ "/puzzle.txt", max_file_size) catch unreachable;
     defer allocator.free(main_input);
@@ -90,7 +120,7 @@ pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, sol
     var timer = std.time.Timer.start() catch unreachable;
 
     {
-        const answer = solve(allocator, example_input, .puzzle1);
+        const answer = solve(allocator, example_input_1, .puzzle1);
         checkAnswer(T, example_answer_1, answer, .puzzle1, .example);
     }
     {
@@ -98,7 +128,7 @@ pub fn runSolution(T: type, allocator: std.mem.Allocator, comptime day: Day, sol
         checkAnswer(T, main_answer_1, answer, .puzzle1, .main);
     }
     {
-        const answer = solve(allocator, example_input, .puzzle2);
+        const answer = solve(allocator, example_input_2, .puzzle2);
         checkAnswer(T, example_answer_2, answer, .puzzle2, .example);
     }
     {
