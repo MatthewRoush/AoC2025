@@ -18,7 +18,7 @@ Solving Advent of Code 2025.
 |   8 |       >24h |        >24h |
 |   9 |       >24h |        >24h |
 |  10 |       >24h |         N/A |
-|  11 |       >24h |         N/A |
+|  11 |       >24h |        >24h |
 
 ## input_data
 
